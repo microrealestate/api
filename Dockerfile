@@ -7,7 +7,7 @@ RUN apt-get update -qq && \
     apt-get install -qqy mongodb-org-tools
 
 WORKDIR /usr/app
-COPY src
+COPY src src
 COPY bkp/demodb bkp/demodb
 COPY scripts scripts
 COPY LICENSE .
