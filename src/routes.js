@@ -11,7 +11,6 @@ const documentManager = require('./managers/documentmanager');
 const templateManager = require('./managers/templatemanager');
 const propertyManager = require('./managers/propertymanager');
 const ownerManager = require('./managers/ownermanager');
-const notificationManager = require('./managers/notificationmanager');
 const accountingManager = require('./managers/accountingmanager');
 const emailManager = require('./managers/emailmanager');
 
@@ -103,10 +102,6 @@ templatesRouter.post('/', templateManager.add);
 templatesRouter.put('/', templateManager.update);
 templatesRouter.delete('/:ids', templateManager.remove);
 router.use('/templates', templatesRouter);
-
-const notificationsRouter = express.Router();
-notificationsRouter.get('/', notificationManager.all);
-router.use('/notifications', notificationsRouter);
 
 const rentsRouter = express.Router();
 rentsRouter.patch('/payment/:id/:term', rentManager.updateByTerm);

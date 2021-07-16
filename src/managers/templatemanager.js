@@ -9,12 +9,10 @@ const pdfGeneratorUrl = `${config.PDFGENERATOR_URL}/templates`;
 // Exported functions
 ////////////////////////////////////////////////////////////////////////////////
 const all = async (req, res) => {
-  const { language } = req;
-
   const response = await axios.get(pdfGeneratorUrl, {
     headers: {
       organizationId: req.headers.organizationid,
-      'Accept-Language': language,
+      'Accept-Language': req.headers['accept-language'],
     },
   });
 
@@ -22,13 +20,12 @@ const all = async (req, res) => {
 };
 
 const one = async (req, res) => {
-  const { language } = req;
   const { id } = req.params;
 
   const response = await axios.get(`${pdfGeneratorUrl}/${id}`, {
     headers: {
       organizationId: req.headers.organizationid,
-      'Accept-Language': language,
+      'Accept-Language': req.headers['accept-language'],
     },
   });
 
@@ -36,12 +33,10 @@ const one = async (req, res) => {
 };
 
 const add = async (req, res) => {
-  const { language } = req;
-
   const response = await axios.post(pdfGeneratorUrl, req.body, {
     headers: {
       organizationId: req.headers.organizationid,
-      'Accept-Language': language,
+      'Accept-Language': req.headers['accept-language'],
     },
   });
 
@@ -49,12 +44,10 @@ const add = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const { language } = req;
-
   const response = await axios.put(pdfGeneratorUrl, req.body, {
     headers: {
       organizationId: req.headers.organizationid,
-      'Accept-Language': language,
+      'Accept-Language': req.headers['accept-language'],
     },
   });
 
@@ -62,13 +55,12 @@ const update = async (req, res) => {
 };
 
 const remove = async (req, res) => {
-  const { language } = req;
   const { id } = req.params;
 
   const response = await axios.delete(`${pdfGeneratorUrl}/${id}`, {
     headers: {
       organizationId: req.headers.organizationid,
-      'Accept-Language': language,
+      'Accept-Language': req.headers['accept-language'],
     },
   });
 

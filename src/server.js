@@ -11,7 +11,6 @@ logger.add(logger.transports.Console, {
 const express = require('express');
 const methodOverride = require('method-override');
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
 
 const expressWinston = require('express-winston');
 const routes = require('./routes');
@@ -20,12 +19,8 @@ const routes = require('./routes');
 const app = express();
 app.set('trust proxy', true);
 app.use(cookieParser());
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-);
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(methodOverride());
 
 // Express log through out winston

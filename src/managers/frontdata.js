@@ -1,5 +1,4 @@
 const moment = require('moment');
-const math = require('mathjs');
 const config = require('../config');
 
 function toRentData(inputRent, inputOccupant, emailStatus) {
@@ -600,15 +599,13 @@ function toProperty(inputProperty, inputOccupant, inputOccupants) {
 
     // TODO moved in Occupant.properties model
     expense: inputProperty.expense || 0,
-    priceWithExpenses: math.round(
-      inputProperty.price + inputProperty.expense,
-      2
-    ),
+    priceWithExpenses:
+      Math.round((inputProperty.price + inputProperty.expense) * 100) / 100,
     m2Expense: inputProperty.surface
-      ? math.round(inputProperty.expense / inputProperty.surface, 2)
+      ? Math.round((inputProperty.expense / inputProperty.surface) * 100) / 100
       : null,
     m2Price: inputProperty.surface
-      ? math.round(inputProperty.price / inputProperty.surface, 2)
+      ? Math.round((inputProperty.price / inputProperty.surface) * 100) / 100
       : null,
 
     // TODO to remove, replaced by address

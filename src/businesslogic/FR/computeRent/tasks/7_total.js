@@ -1,5 +1,3 @@
-const math = require('mathjs');
-
 module.exports = function (
   contract,
   rentDate,
@@ -20,10 +18,9 @@ module.exports = function (
     (total, discount) => total + discount.amount,
     0
   );
-  const vat = math.round(
-    rent.vats.reduce((total, vat) => total + vat.amount, 0),
-    2
-  );
+  const vat =
+    Math.round(rent.vats.reduce((total, vat) => total + vat.amount, 0) * 100) /
+    100;
   const payment = rent.payments.reduce(
     (total, payment) => total + payment.amount,
     0
@@ -34,10 +31,11 @@ module.exports = function (
   rent.total.debts = debts;
   rent.total.discount = discount;
   rent.total.vat = vat;
-  rent.total.grandTotal = math.round(
-    preTaxAmount + charges + debts - discount + vat + rent.total.balance,
-    2
-  );
+  rent.total.grandTotal =
+    Math.round(
+      (preTaxAmount + charges + debts - discount + vat + rent.total.balance) *
+        100
+    ) / 100;
   rent.total.payment = payment;
 
   return rent;

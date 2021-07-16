@@ -11,7 +11,6 @@ const axios = require('axios');
 // Exported functions
 ////////////////////////////////////////////////////////////////////////////////
 const get = async (req, res) => {
-  const { language } = req;
   const { document, id, term } = req.params;
   let url = `${config.PDFGENERATOR_URL}/${document}/${id}`;
   if (term) {
@@ -22,7 +21,7 @@ const get = async (req, res) => {
     responseType: 'stream',
     headers: {
       organizationId: req.headers.organizationid || String(req.realm._id),
-      'Accept-Language': language,
+      'Accept-Language': req.headers['accept-language'],
     },
   });
 

@@ -18,7 +18,7 @@ const _sendEmail = async (req, message) => {
     const response = await axios.post(config.EMAILER_URL, postData, {
       headers: {
         organizationId: req.headers.organizationid || String(req.realm._id),
-        'Accept-Language': req.language,
+        'Accept-Language': req.headers['accept-language'],
       },
     });
 
