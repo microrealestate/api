@@ -12,7 +12,6 @@ class LeaseModel extends Model {
       timeRange: String, // days, weeks, months, years
       active: Boolean,
       system: Boolean,
-      templateId: String,
     });
   }
 
@@ -26,7 +25,7 @@ class LeaseModel extends Model {
       callback(
         null,
         leases.sort((p1, p2) => {
-          return p1.name.localeCompare(p2.name);
+          return p1.name?.localeCompare(p2.name);
         })
       );
     });

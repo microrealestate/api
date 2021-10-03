@@ -5,6 +5,7 @@ const FD = require('./frontdata');
 const Contract = require('./contract');
 const occupantModel = require('../models/occupant');
 const propertyModel = require('../models/property');
+const documentModel = require('../models/document');
 
 const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 12);
 
@@ -218,78 +219,115 @@ function update(req, res) {
   });
 }
 
-function remove(req, res) {
+async function remove(req, res) {
   const realm = req.realm;
-  const occupantIds = req.params.ids.split(',');
+  const occupantIds = req.params?.ids.split(',') || [];
 
-  function releaseRent(callback) {
-    const occupantfilters = occupantIds.map((_id) => {
-      return { _id };
-    });
-
-    occupantModel.findFilter(
-      realm,
-      {
-        $query: {
-          $or: occupantfilters,
-        },
-      },
-      (errors, occupants) => {
-        if (errors) {
-          return res.status(500).json({
-            errors,
-          });
-        }
-
-        if (!occupants || !occupants.length) {
-          return res.sendStatus(404);
-        }
-
-        if (occupants) {
-          const occupantsWithPaidRents = occupants.filter((occupant) => {
-            return occupant.rents.some(
-              (rent) =>
-                (rent.payments &&
-                  rent.payments.some((payment) => payment.amount > 0)) ||
-                rent.discounts.some(
-                  (discount) => discount.origin === 'settlement'
-                )
-            );
-          });
-          if (occupantsWithPaidRents.length > 0) {
-            return res.status(422).json({
-              errors: [
-                `impossible to remove ${occupantsWithPaidRents[0].name}. Rents have been recorded.`,
-              ],
-            });
-          }
-          occupantModel.remove(
-            realm,
-            occupants.map((occupant) => occupant._id.toString()),
-            (errors) => {
-              if (errors) {
-                return res.status(500).json({
-                  errors,
-                });
-              }
-              callback();
-            }
-          );
-        }
-      }
-    );
+  if (!occupantIds.length) {
+    return res.sendStatus(404);
   }
 
-  releaseRent(() => {
-    occupantModel.remove(realm, occupantIds, (errors) => {
-      if (errors) {
-        return res.status(500).json({
-          errors,
-        });
-      }
-      res.sendStatus(200);
+  try {
+    const occupants = await new Promise((resolve, reject) => {
+      occupantModel.findFilter(
+        realm,
+        {
+          $query: {
+            $or: occupantIds.map((_id) => {
+              return { _id };
+            }),
+          },
+        },
+        (errors, occupants) => {
+          if (errors) {
+            return reject({
+              errors,
+            });
+          }
+
+          resolve(occupants || []);
+        }
+      );
     });
-  });
+
+    if (!occupants.length) {
+      return res.sendStatus(404);
+    }
+
+    const occupantsWithPaidRents = occupants.filter((occupant) => {
+      return occupant.rents.some(
+        (rent) =>
+          (rent.payments &&
+            rent.payments.some((payment) => payment.amount > 0)) ||
+          rent.discounts.some((discount) => discount.origin === 'settlement')
+      );
+    });
+
+    if (occupantsWithPaidRents.length) {
+      return res.status(422).json({
+        errors: [
+          `impossible to remove ${occupantsWithPaidRents[0].name}. Rents have been recorded.`,
+        ],
+      });
+    }
+
+    const documents = await new Promise((resolve, reject) => {
+      documentModel.findAll(realm, async (errors, dbDocuments) => {
+        if (errors && errors.length > 0) {
+          return reject({
+            errors: errors,
+          });
+        }
+        resolve(
+          dbDocuments?.filter((document) =>
+            occupantIds.includes(document.tenantId)
+          ) || []
+        );
+      });
+    });
+
+    await Promise.all([
+      ...(documents.length
+        ? [
+            new Promise((resolve, reject) => {
+              documentModel.remove(
+                realm,
+                documents.map(({ _id }) => _id),
+                (errors) => {
+                  if (errors) {
+                    return reject({
+                      errors,
+                    });
+                  }
+                  resolve();
+                }
+              );
+            }),
+          ]
+        : []),
+      new Promise((resolve, reject) => {
+        occupantModel.remove(
+          realm,
+          occupants.map((occupant) => occupant._id.toString()),
+          (errors) => {
+            if (errors) {
+              return reject({
+                errors,
+              });
+            }
+            resolve();
+          }
+        );
+      }),
+    ]);
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      errors: ['a problem occured when deleting occupants'],
+    });
+  }
 }
 
 function all(req, res) {

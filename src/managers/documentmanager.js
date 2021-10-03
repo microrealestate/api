@@ -1,16 +1,26 @@
-'use strict';
-
-const moment = require('moment');
 const config = require('../config');
-const FD = require('./frontdata');
-const occupantModel = require('../models/occupant');
-const documentModel = require('../models/document');
 const axios = require('axios');
+
+//TODO: check if this code can be moved in the nginx config
+
+const pdfGeneratorUrl = `${config.PDFGENERATOR_URL}/documents`;
+const request = async (req, res, cb) => {
+  try {
+    await cb({
+      organizationId: req.headers.organizationid,
+      'Accept-Language': req.headers['accept-language'],
+    });
+  } catch (error) {
+    res
+      .status(error?.response?.status || 500)
+      .json(error?.response?.data || {});
+  }
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Exported functions
 ////////////////////////////////////////////////////////////////////////////////
-const get = async (req, res) => {
+const deprecatedGet = async (req, res) => {
   const { document, id, term } = req.params;
   let url = `${config.PDFGENERATOR_URL}/${document}/${id}`;
   if (term) {
@@ -20,7 +30,7 @@ const get = async (req, res) => {
   const response = await axios.get(url, {
     responseType: 'stream',
     headers: {
-      organizationId: req.headers.organizationid || String(req.realm._id),
+      organizationId: req.headers.organizationid,
       'Accept-Language': req.headers['accept-language'],
     },
   });
@@ -28,52 +38,63 @@ const get = async (req, res) => {
   response.data.pipe(res);
 };
 
-const update = (req, res) => {
-  const realm = req.realm;
-  const occupant = documentModel.schema.filter(req.body);
+const all = async (req, res) => {
+  request(req, res, async (headers) => {
+    const response = await axios.get(pdfGeneratorUrl, { headers });
 
-  if (!occupant.documents) {
-    occupant.documents = [];
-  }
+    res.json(response.data);
+  });
+};
 
-  occupantModel.findOne(realm, occupant._id, (errors, dbOccupant) => {
-    if (errors) {
-      res.json({
-        errors: errors,
-      });
-      return;
-    }
+const one = async (req, res) => {
+  request(req, res, async (headers) => {
+    const { id } = req.params;
 
-    dbOccupant.documents = [];
-
-    occupant.documents.forEach((document) => {
-      const momentExpirationDate = moment(
-        document.expirationDate,
-        'DD/MM/YYYY'
-      ).endOf('day');
-      if (
-        document.name &&
-        document.name.trim() !== '' &&
-        momentExpirationDate.isValid()
-      ) {
-        document.expirationDate = momentExpirationDate.toDate();
-        dbOccupant.documents.push(document);
-      }
+    const response = await axios.get(`${pdfGeneratorUrl}/${id}`, {
+      headers,
     });
 
-    occupantModel.update(realm, dbOccupant, (errors) => {
-      if (errors) {
-        res.json({
-          errors: errors,
-        });
-        return;
-      }
-      res.json(FD.toOccupantData(dbOccupant));
+    res.json(response.data);
+  });
+};
+
+const add = (req, res) => {
+  request(req, res, async (headers) => {
+    const response = await axios.post(pdfGeneratorUrl, req.body, {
+      headers,
     });
+
+    res.json(response.data);
+  });
+};
+
+const update = async (req, res) => {
+  request(req, res, async (headers) => {
+    const response = await axios.put(pdfGeneratorUrl, req.body, {
+      headers,
+    });
+
+    res.json(response.data);
+  });
+};
+
+const remove = async (req, res) => {
+  request(req, res, async (headers) => {
+    const { ids } = req.params;
+
+    const response = await axios.delete(`${pdfGeneratorUrl}/${ids}`, {
+      headers,
+    });
+
+    res.json(response.data);
   });
 };
 
 module.exports = {
-  get,
+  deprecatedGet,
+  all,
+  one,
+  add,
   update,
+  remove,
 };

@@ -54,7 +54,7 @@ module.exports = {
       const findTenant = promisify(occupantModel.findOne).bind(occupantModel);
       const messages = [];
       await Promise.all(
-        tenantIds.map(async (tenantId, index) => {
+        tenantIds?.map(async (tenantId, index) => {
           const tenant = await findTenant(realm, tenantId);
           messages.push({
             name: tenant.name,

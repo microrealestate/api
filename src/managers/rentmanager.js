@@ -104,11 +104,7 @@ const _getRentsDataByTerm = async (realm, currentDate, frequency) => {
       ...occupant.rents
         .filter((rent) => rent.term >= startTerm && rent.term <= endTerm)
         .map((rent) =>
-          FD.toRentData(
-            rent,
-            occupant,
-            emailStatus && emailStatus[occupant._id]
-          )
+          FD.toRentData(rent, occupant, emailStatus?.[occupant._id])
         )
     );
     return acc;
@@ -319,7 +315,11 @@ const rentOfOccupantByTerm = async (req, res) => {
 };
 
 const _rentOfOccupant = async (realm, tenantId, term) => {
-  const dbOccupants = await _findOccupants(realm, tenantId, Number(term));
+  const [dbOccupants = [], emailStatus = {}] = await Promise.all([
+    _findOccupants(realm, tenantId, Number(term)).catch(logger.error),
+    _getEmailStatus(realm, Number(term)).catch(logger.error),
+  ]);
+
   if (!dbOccupants.length) {
     throw { status: 404, error: 'tenant not found' };
   }
@@ -328,7 +328,11 @@ const _rentOfOccupant = async (realm, tenantId, term) => {
   if (!dbOccupant.rents.length) {
     throw { status: 404, error: 'rent not found' };
   }
-  const rent = FD.toRentData(dbOccupant.rents[0], dbOccupant);
+  const rent = FD.toRentData(
+    dbOccupant.rents[0],
+    dbOccupant,
+    emailStatus?.[dbOccupant._id]
+  );
   if (rent.term === Number(moment().format('YYYYMMDDHH'))) {
     rent.active = 'active';
   }

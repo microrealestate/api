@@ -10,6 +10,9 @@
     "lint": "eslint ./ --ext js",
     "prepare": "husky install"
   },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
+  },
   "author": "Camel Aissani",
   "license": "MIT",
   "dependencies": {

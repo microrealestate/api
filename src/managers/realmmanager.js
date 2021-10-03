@@ -21,11 +21,7 @@ const _isNameAlreadyTaken = (realm, realms = []) => {
 };
 
 const _escapeSecrets = (realm) => {
-  if (
-    realm.thirdParties &&
-    realm.thirdParties.mailgun &&
-    realm.thirdParties.mailgun.apiKey
-  ) {
+  if (realm.thirdParties?.mailgun?.apiKey) {
     realm.thirdParties.mailgun.apiKey = SECRET_PLACEHOLDER;
   }
   return realm;
@@ -34,6 +30,8 @@ const _escapeSecrets = (realm) => {
 module.exports = {
   add(req, res) {
     const newRealm = realmModel.schema.filter(req.body);
+
+    delete req.body.thirdParties?.mailgun?.apiKeyUpdated;
 
     if (!_hasRequiredFields(newRealm)) {
       return res.status(422).json({ error: 'missing fields' });
@@ -45,18 +43,10 @@ module.exports = {
         .json({ error: 'organization name already exists' });
     }
 
-    if (
-      newRealm.thirdParties &&
-      newRealm.thirdParties.mailgun &&
-      newRealm.thirdParties.mailgun.apiKey
-    ) {
-      if (newRealm.thirdParties.mailgun.apiKey !== SECRET_PLACEHOLDER) {
-        newRealm.thirdParties.mailgun.apiKey = crypto.encrypt(
-          newRealm.thirdParties.mailgun.apiKey
-        );
-      } else {
-        delete newRealm.thirdParties.mailgun.apiKey;
-      }
+    if (newRealm.thirdParties?.mailgun?.apiKey) {
+      newRealm.thirdParties.mailgun.apiKey = crypto.encrypt(
+        newRealm.thirdParties.mailgun.apiKey
+      );
     }
 
     realmModel.add(newRealm, (errors, realm) => {
@@ -69,16 +59,15 @@ module.exports = {
     });
   },
   async update(req, res) {
-    const mailgunApiKeyUpdated =
-      req.body.thirdParties &&
-      req.body.thirdParties.mailgun &&
-      req.body.thirdParties.mailgun.apiKeyUpdated;
+    const mailgunApiKeyUpdated = req.body.thirdParties?.mailgun?.apiKeyUpdated;
     const updatedRealm = realmModel.schema.filter(req.body);
+
+    delete req.body.thirdParties?.mailgun?.apiKeyUpdated;
 
     if (req.realm._id !== updatedRealm._id) {
       return res
         .status(403)
-        .json({ error: 'only current selected organizaton can be updated' });
+        .json({ error: 'only current selected organization can be updated' });
     }
 
     const currentMember = req.realm.members.find(
@@ -109,19 +98,14 @@ module.exports = {
         .json({ error: 'organization name already exists' });
     }
 
-    if (
-      mailgunApiKeyUpdated &&
-      updatedRealm.thirdParties &&
-      updatedRealm.thirdParties.mailgun &&
-      updatedRealm.thirdParties.mailgun.apiKey
-    ) {
-      if (updatedRealm.thirdParties.mailgun.apiKey !== SECRET_PLACEHOLDER) {
-        updatedRealm.thirdParties.mailgun.apiKey = crypto.encrypt(
-          updatedRealm.thirdParties.mailgun.apiKey
-        );
-      } else {
-        delete updatedRealm.thirdParties.mailgun.apiKey;
-      }
+    if (mailgunApiKeyUpdated) {
+      updatedRealm.thirdParties.mailgun.apiKey = crypto.encrypt(
+        updatedRealm.thirdParties.mailgun.apiKey
+      );
+    } else if (req.realm.thirdParties?.mailgun?.apiKey) {
+      updatedRealm.thirdParties.mailgun.apiKey = crypto.encrypt(
+        req.realm.thirdParties.mailgun.apiKey
+      );
     }
 
     const usernameMap = {};

@@ -91,13 +91,18 @@ occupantsRouter.delete('/:ids', occupantManager.remove);
 router.use('/tenants', occupantsRouter);
 
 const documentsRouter = express.Router();
-documentsRouter.get('/:document/:id/:term', documentManager.get);
+documentsRouter.get('/:document/:id/:term', documentManager.deprecatedGet);
+documentsRouter.get('/', documentManager.all);
+documentsRouter.get('/:id', documentManager.one);
+documentsRouter.post('/', documentManager.add);
 documentsRouter.patch('/:id', documentManager.update);
+documentsRouter.delete('/:ids', documentManager.remove);
 router.use('/documents', documentsRouter);
 
 const templatesRouter = express.Router();
 templatesRouter.get('/', templateManager.all);
 templatesRouter.get('/:id', templateManager.one);
+templatesRouter.get('/fields', templateManager.getFields);
 templatesRouter.post('/', templateManager.add);
 templatesRouter.put('/', templateManager.update);
 templatesRouter.delete('/:ids', templateManager.remove);

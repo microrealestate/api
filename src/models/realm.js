@@ -17,7 +17,7 @@ class RealmModel extends Model {
       locale: String,
       currency: String,
       tenants: Array, // [{ name, emails, access },]
-      thirdParties: Object, // { mailgun: { apiKey, domain, fromEmail, replyToEmail }}
+      thirdParties: Object, // { mailgun: { apiKey, domain, fromEmail, replyToEmail } },
 
       // TODO to remove, replaced by companyInfo
       creation: String,

@@ -1,7 +1,7 @@
 const config = require('../config');
 const axios = require('axios');
 
-//TODO: if no added value to have the api in loca then move that in nginx config
+//TODO: check if this code can be moved in the nginx config
 
 const pdfGeneratorUrl = `${config.PDFGENERATOR_URL}/templates`;
 
@@ -23,6 +23,17 @@ const one = async (req, res) => {
   const { id } = req.params;
 
   const response = await axios.get(`${pdfGeneratorUrl}/${id}`, {
+    headers: {
+      organizationId: req.headers.organizationid,
+      'Accept-Language': req.headers['accept-language'],
+    },
+  });
+
+  res.json(response.data);
+};
+
+const getFields = async (req, res) => {
+  const response = await axios.get(`${pdfGeneratorUrl}/fields`, {
     headers: {
       organizationId: req.headers.organizationid,
       'Accept-Language': req.headers['accept-language'],
@@ -55,9 +66,9 @@ const update = async (req, res) => {
 };
 
 const remove = async (req, res) => {
-  const { id } = req.params;
+  const { ids } = req.params;
 
-  const response = await axios.delete(`${pdfGeneratorUrl}/${id}`, {
+  const response = await axios.delete(`${pdfGeneratorUrl}/${ids}`, {
     headers: {
       organizationId: req.headers.organizationid,
       'Accept-Language': req.headers['accept-language'],
@@ -70,6 +81,7 @@ const remove = async (req, res) => {
 module.exports = {
   all,
   one,
+  getFields,
   add,
   update,
   remove,

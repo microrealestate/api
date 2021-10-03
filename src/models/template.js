@@ -1,20 +1,19 @@
 const OF = require('./objectfilter');
 const Model = require('./model');
 
-class DocumentModel extends Model {
+class TemplateModel extends Model {
   constructor() {
-    super('documents');
+    super('templates');
     this.schema = new OF({
       _id: String,
-      tenantId: String,
-      leaseId: String,
       name: String,
       type: String,
       description: String,
       contents: Object,
       html: String,
+      linkedResourceIds: Array,
     });
   }
 }
 
-module.exports = new DocumentModel();
+module.exports = new TemplateModel();
