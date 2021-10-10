@@ -4,6 +4,7 @@ const logger = require('winston');
 const config = require('./config');
 const realmModel = require('./models/realm');
 const realmManager = require('./managers/realmmanager');
+const dashboardManager = require('./managers/dashboardmanager');
 const leaseManager = require('./managers/leasemanager');
 const rentManager = require('./managers/rentmanager');
 const occupantManager = require('./managers/occupantmanager');
@@ -73,6 +74,10 @@ realmsRouter.get('/:id', realmManager.one);
 realmsRouter.post('/', realmManager.add);
 realmsRouter.patch('/:id', realmManager.update);
 router.use('/realms', realmsRouter);
+
+const dashboardRouter = express.Router();
+dashboardRouter.get('/', dashboardManager.all);
+router.use('/dashboard', dashboardRouter);
 
 const leasesRouter = express.Router();
 leasesRouter.get('/', leaseManager.all);

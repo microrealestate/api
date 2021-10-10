@@ -3,12 +3,15 @@ const logger = require('winston');
 const config = require('./config');
 const server = require('./server');
 const db = require('./models/db');
+const mongoosedb = require('./models/mongoose/db');
 const restoredb = require('../scripts/mongorestore');
 const migratedb = require('../scripts/migration');
 
-db.init()
-  .then(db.exists)
-  .then(async (/*isDbExists*/) => {
+async function startService() {
+  try {
+    await db.init();
+    await mongoosedb.start();
+
     if (config.restoreDatabase) {
       await restoredb();
       logger.debug('database restored');
@@ -26,8 +29,10 @@ db.init()
         logger.info('In development mode');
       }
     });
-  })
-  .catch((err) => {
+  } catch (err) {
     logger.error(err);
     process.exit(1);
-  });
+  }
+}
+
+startService();

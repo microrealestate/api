@@ -191,6 +191,7 @@ function update(req, res) {
             end: occupant.endDate,
             termination: occupant.terminationDate,
             properties: occupant.properties,
+            frequency: occupant.frequency,
           };
           if (occupant.vatRatio !== undefined) {
             modification.vatRate = occupant.vatRatio;

@@ -24,6 +24,12 @@ const _escapeSecrets = (realm) => {
   if (realm.thirdParties?.mailgun?.apiKey) {
     realm.thirdParties.mailgun.apiKey = SECRET_PLACEHOLDER;
   }
+  if (realm.thirdParties?.b2?.applicationKeyId) {
+    realm.thirdParties.b2.applicationKeyId = SECRET_PLACEHOLDER;
+  }
+  if (realm.thirdParties?.b2?.applicationKey) {
+    realm.thirdParties.b2.applicationKey = SECRET_PLACEHOLDER;
+  }
   return realm;
 };
 
@@ -32,6 +38,8 @@ module.exports = {
     const newRealm = realmModel.schema.filter(req.body);
 
     delete req.body.thirdParties?.mailgun?.apiKeyUpdated;
+    delete req.body.thirdParties?.b2?.applicationKeyIdUpdated;
+    delete req.body.thirdParties?.b2?.applicationKeyUpdated;
 
     if (!_hasRequiredFields(newRealm)) {
       return res.status(422).json({ error: 'missing fields' });
@@ -49,6 +57,18 @@ module.exports = {
       );
     }
 
+    if (newRealm.thirdParties?.b2?.applicationKey) {
+      newRealm.thirdParties.b2.applicationKey = crypto.encrypt(
+        newRealm.thirdParties.b2.applicationKey
+      );
+    }
+
+    if (newRealm.thirdParties?.b2?.applicationKeyId) {
+      newRealm.thirdParties.b2.applicationKeyId = crypto.encrypt(
+        newRealm.thirdParties.b2.applicationKeyId
+      );
+    }
+
     realmModel.add(newRealm, (errors, realm) => {
       if (errors) {
         return res.status(500).json({
@@ -60,9 +80,15 @@ module.exports = {
   },
   async update(req, res) {
     const mailgunApiKeyUpdated = req.body.thirdParties?.mailgun?.apiKeyUpdated;
+    const b2ApplicationKeyIdUpdated =
+      req.body.thirdParties?.b2?.applicationKeyIdUpdated;
+    const b2ApplicationKeyUpdated =
+      req.body.thirdParties?.b2?.applicationKeyUpdated;
     const updatedRealm = realmModel.schema.filter(req.body);
 
     delete req.body.thirdParties?.mailgun?.apiKeyUpdated;
+    delete req.body.thirdParties?.b2?.applicationKeyIdUpdated;
+    delete req.body.thirdParties?.b2?.applicationKeyUpdated;
 
     if (req.realm._id !== updatedRealm._id) {
       return res
@@ -105,6 +131,26 @@ module.exports = {
     } else if (req.realm.thirdParties?.mailgun?.apiKey) {
       updatedRealm.thirdParties.mailgun.apiKey = crypto.encrypt(
         req.realm.thirdParties.mailgun.apiKey
+      );
+    }
+
+    if (b2ApplicationKeyIdUpdated) {
+      updatedRealm.thirdParties.b2.applicationKeyId = crypto.encrypt(
+        updatedRealm.thirdParties.b2.applicationKeyId
+      );
+    } else if (req.realm.thirdParties?.b2?.applicationKeyId) {
+      updatedRealm.thirdParties.b2.applicationKeyId = crypto.encrypt(
+        req.realm.thirdParties.b2.applicationKeyId
+      );
+    }
+
+    if (b2ApplicationKeyUpdated) {
+      updatedRealm.thirdParties.b2.applicationKey = crypto.encrypt(
+        updatedRealm.thirdParties.b2.applicationKey
+      );
+    } else if (req.realm.thirdParties?.b2?.applicationKey) {
+      updatedRealm.thirdParties.b2.applicationKey = crypto.encrypt(
+        req.realm.thirdParties.b2.applicationKey
       );
     }
 
