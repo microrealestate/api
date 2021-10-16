@@ -38,7 +38,7 @@ const deprecatedGet = async (req, res) => {
   response.data.pipe(res);
 };
 
-const all = async (req, res) => {
+const all = (req, res) => {
   request(req, res, async (headers) => {
     const response = await axios.get(pdfGeneratorUrl, { headers });
 
@@ -46,7 +46,7 @@ const all = async (req, res) => {
   });
 };
 
-const one = async (req, res) => {
+const one = (req, res) => {
   request(req, res, async (headers) => {
     const { id } = req.params;
 
@@ -68,7 +68,7 @@ const add = (req, res) => {
   });
 };
 
-const update = async (req, res) => {
+const update = (req, res) => {
   request(req, res, async (headers) => {
     const response = await axios.put(pdfGeneratorUrl, req.body, {
       headers,
@@ -78,7 +78,7 @@ const update = async (req, res) => {
   });
 };
 
-const remove = async (req, res) => {
+const remove = (req, res) => {
   request(req, res, async (headers) => {
     const { ids } = req.params;
 
