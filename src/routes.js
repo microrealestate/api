@@ -1,6 +1,4 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const logger = require('winston');
 const config = require('./config');
 const realmModel = require('./models/realm');
 const realmManager = require('./managers/realmmanager');
@@ -8,36 +6,15 @@ const dashboardManager = require('./managers/dashboardmanager');
 const leaseManager = require('./managers/leasemanager');
 const rentManager = require('./managers/rentmanager');
 const occupantManager = require('./managers/occupantmanager');
-const documentManager = require('./managers/documentmanager');
-const templateManager = require('./managers/templatemanager');
 const propertyManager = require('./managers/propertymanager');
 const ownerManager = require('./managers/ownermanager');
 const accountingManager = require('./managers/accountingmanager');
 const emailManager = require('./managers/emailmanager');
-
+const { needAccessToken } = require('./utils/middlewares');
 const router = express.Router();
 
 // protect the api access by checking the access token
-router.use((req, res, next) => {
-  if (!req.headers.authorization) {
-    return res.sendStatus(403);
-  }
-
-  const accessToken = req.headers.authorization.split(' ')[1];
-  if (!accessToken) {
-    return res.sendStatus(403);
-  }
-
-  try {
-    const decoded = jwt.verify(accessToken, config.ACCESS_TOKEN_SECRET);
-    req.user = decoded.account;
-  } catch (err) {
-    logger.warn(err);
-    return res.sendStatus(403);
-  }
-
-  next();
-});
+router.use(needAccessToken(config.ACCESS_TOKEN_SECRET));
 
 // update req with the user organizations
 router.use((req, res, next) => {
@@ -94,24 +71,6 @@ occupantsRouter.post('/', occupantManager.add);
 occupantsRouter.patch('/:id', occupantManager.update);
 occupantsRouter.delete('/:ids', occupantManager.remove);
 router.use('/tenants', occupantsRouter);
-
-const documentsRouter = express.Router();
-documentsRouter.get('/:document/:id/:term', documentManager.deprecatedGet);
-documentsRouter.get('/', documentManager.all);
-documentsRouter.get('/:id', documentManager.one);
-documentsRouter.post('/', documentManager.add);
-documentsRouter.patch('/:id', documentManager.update);
-documentsRouter.delete('/:ids', documentManager.remove);
-router.use('/documents', documentsRouter);
-
-const templatesRouter = express.Router();
-templatesRouter.get('/', templateManager.all);
-templatesRouter.get('/:id', templateManager.one);
-templatesRouter.get('/fields', templateManager.getFields);
-templatesRouter.post('/', templateManager.add);
-templatesRouter.put('/', templateManager.update);
-templatesRouter.delete('/:ids', templateManager.remove);
-router.use('/templates', templatesRouter);
 
 const rentsRouter = express.Router();
 rentsRouter.patch('/payment/:id/:term', rentManager.updateByTerm);
