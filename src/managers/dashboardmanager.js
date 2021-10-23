@@ -101,7 +101,9 @@ function all(req, res) {
                 if (currentRent) {
                   acc.push({
                     tenant: tenant.toObject(),
-                    balance: currentRent.total.grandTotal * -1,
+                    balance:
+                      currentRent.total.payment - currentRent.total.grandTotal,
+                    rent: currentRent,
                   });
                 }
                 return acc;
@@ -151,7 +153,15 @@ function all(req, res) {
           return acc;
         }, emptyRevenues)
       )
-        .map(([, value]) => value)
+        .map(([, value]) => ({
+          ...value,
+          paid:
+            value.paid > 0 ? Math.round(value.paid * 100) / 100 : value.paid,
+          notPaid:
+            value.notPaid < 0
+              ? Math.round(value.notPaid * 100) / 100
+              : value.notPaid,
+        }))
         .sort((r1, r2) =>
           moment(r1.month, 'MMYYYY').isBefore(moment(r2.month, 'MMYYYY'))
             ? -1
