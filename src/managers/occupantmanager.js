@@ -14,7 +14,8 @@ function _buildPropertyMap(realm, callback) {
     const propertyMap = {};
     if (properties) {
       properties.reduce((acc, property) => {
-        acc[property._id.toString()] = property;
+        property._id = property._id.toString();
+        acc[property._id] = property;
         return acc;
       }, propertyMap);
     }
@@ -142,6 +143,7 @@ function update(req, res) {
           if (dbOccupant.properties) {
             dbOccupant.properties.forEach((dbItem) => {
               if (dbItem.propertyId === item.propertyId) {
+                dbItem.property._id = dbItem.property._id.toString();
                 itemToKeep = dbItem;
               }
             });
