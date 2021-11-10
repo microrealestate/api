@@ -21,8 +21,6 @@ const config = {
   PDFGENERATOR_URL:
     process.env.PDFGENERATOR_URL || 'http://localhost:8082/pdfgenerator',
   ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET || 'access_token_secret',
-  REFRESH_TOKEN_SECRET:
-    process.env.REFRESH_TOKEN_SECRET || 'refresh_token_secret',
   CIPHER_KEY: process.env.CIPHER_KEY || 'cipher_key_secret',
   CIPHER_IV_KEY: process.env.CIPHER_IV_KEY || 'cipher_iv_key_secret',
 };
@@ -32,7 +30,6 @@ module.exports = {
   log: () => {
     const escapedConfig = sugar.Object.clone(config);
     escapedConfig.ACCESS_TOKEN_SECRET = '****';
-    escapedConfig.REFRESH_TOKEN_SECRET = '****';
     escapedConfig.CIPHER_KEY = '****';
     escapedConfig.CIPHER_IV_KEY = '****';
     Object.entries(escapedConfig)

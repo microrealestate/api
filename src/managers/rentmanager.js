@@ -52,7 +52,13 @@ const _findOccupants = (realm, occupantId, startTerm, endTerm) => {
   });
 };
 
-const _getEmailStatus = async (realm, startTerm, endTerm) => {
+const _getEmailStatus = async (
+  authorizationHeader,
+  locale,
+  realm,
+  startTerm,
+  endTerm
+) => {
   try {
     let emailEndPoint = `${config.EMAILER_URL}/status/${startTerm}`;
     if (endTerm) {
@@ -60,7 +66,11 @@ const _getEmailStatus = async (realm, startTerm, endTerm) => {
     }
     logger.debug(`get email status ${emailEndPoint}`);
     const response = await axios.get(emailEndPoint, {
-      organizationId: String(realm._id),
+      headers: {
+        authorization: authorizationHeader,
+        organizationId: String(realm._id),
+        'Accept-Language': locale,
+      },
     });
     logger.debug(response.data);
     return response.data.reduce((acc, status) => {
@@ -80,6 +90,7 @@ const _getEmailStatus = async (realm, startTerm, endTerm) => {
       return acc;
     }, {});
   } catch (error) {
+    console.error(error);
     if (config.demoMode) {
       logger.info('email status fallback workflow activated in demo mode');
       return {};
@@ -89,13 +100,25 @@ const _getEmailStatus = async (realm, startTerm, endTerm) => {
   }
 };
 
-const _getRentsDataByTerm = async (realm, currentDate, frequency) => {
+const _getRentsDataByTerm = async (
+  authorizationHeader,
+  locale,
+  realm,
+  currentDate,
+  frequency
+) => {
   const startTerm = Number(currentDate.startOf(frequency).format('YYYYMMDDHH'));
   const endTerm = Number(currentDate.endOf(frequency).format('YYYYMMDDHH'));
 
   const [dbOccupants, emailStatus = {}] = await Promise.all([
     _findOccupants(realm, null, startTerm, endTerm),
-    _getEmailStatus(realm, startTerm, endTerm).catch(logger.error),
+    _getEmailStatus(
+      authorizationHeader,
+      locale,
+      realm,
+      startTerm,
+      endTerm
+    ).catch(logger.error),
   ]);
 
   // compute rents
@@ -297,7 +320,15 @@ const rentOfOccupant = async (req, res) => {
     moment(`${month}/${year}`, 'MM/YYYY').startOf('month').format('YYYYMMDDHH')
   );
   try {
-    res.json(await _rentOfOccupant(realm, id, term));
+    res.json(
+      await _rentOfOccupant(
+        req.headers.authorization,
+        req.headers['accept-language'],
+        realm,
+        id,
+        term
+      )
+    );
   } catch (errors) {
     logger.error(errors);
     res.status(errors.status || 500).json({ errors });
@@ -308,16 +339,32 @@ const rentOfOccupantByTerm = async (req, res) => {
   const realm = req.realm;
   const { id, term } = req.params;
   try {
-    res.json(await _rentOfOccupant(realm, id, term));
+    res.json(
+      await _rentOfOccupant(
+        req.headers.authorization,
+        req.headers['accept-language'],
+        realm,
+        id,
+        term
+      )
+    );
   } catch (errors) {
     res.status(errors.status || 500).json({ errors });
   }
 };
 
-const _rentOfOccupant = async (realm, tenantId, term) => {
+const _rentOfOccupant = async (
+  authorizationHeader,
+  locale,
+  realm,
+  tenantId,
+  term
+) => {
   const [dbOccupants = [], emailStatus = {}] = await Promise.all([
     _findOccupants(realm, tenantId, Number(term)).catch(logger.error),
-    _getEmailStatus(realm, Number(term)).catch(logger.error),
+    _getEmailStatus(authorizationHeader, locale, realm, Number(term)).catch(
+      logger.error
+    ),
   ]);
 
   if (!dbOccupants.length) {
@@ -350,7 +397,15 @@ const all = async (req, res) => {
   }
 
   try {
-    res.json(await _getRentsDataByTerm(realm, currentDate, 'months'));
+    res.json(
+      await _getRentsDataByTerm(
+        req.headers.authorization,
+        req.headers['accept-language'],
+        realm,
+        currentDate,
+        'months'
+      )
+    );
   } catch (errors) {
     logger.error(errors);
     res.status(500).json({ errors });
@@ -366,6 +421,8 @@ const overview = async (req, res) => {
     }
 
     const { overview } = await _getRentsDataByTerm(
+      req.headers.authorization,
+      req.headers['accept-language'],
       realm,
       currentDate,
       'months'
