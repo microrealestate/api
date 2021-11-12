@@ -68,7 +68,7 @@ const _getEmailStatus = async (
     const response = await axios.get(emailEndPoint, {
       headers: {
         authorization: authorizationHeader,
-        organizationId: String(realm._id),
+        organizationid: String(realm._id),
         'Accept-Language': locale,
       },
     });

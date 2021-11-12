@@ -18,8 +18,6 @@ const config = {
   demoMode: toBoolean(process.env.DEMO_MODE || true),
   database: process.env.MONGO_URL || 'mongodb://localhost/demodb',
   EMAILER_URL: process.env.EMAILER_URL || 'http://localhost:8083/emailer',
-  PDFGENERATOR_URL:
-    process.env.PDFGENERATOR_URL || 'http://localhost:8082/pdfgenerator',
   ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET || 'access_token_secret',
   CIPHER_KEY: process.env.CIPHER_KEY || 'cipher_key_secret',
   CIPHER_IV_KEY: process.env.CIPHER_IV_KEY || 'cipher_iv_key_secret',

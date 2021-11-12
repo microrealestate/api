@@ -18,7 +18,7 @@ const _sendEmail = async (req, message) => {
     const response = await axios.post(config.EMAILER_URL, postData, {
       headers: {
         authorization: req.headers.authorization,
-        organizationId: req.headers.organizationid || String(req.realm._id),
+        organizationid: req.headers.organizationid || String(req.realm._id),
         'Accept-Language': req.headers['accept-language'],
       },
     });
@@ -37,13 +37,11 @@ const _sendEmail = async (req, message) => {
       })
     );
   } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message;
     logger.error(`POST ${config.EMAILER_URL} failed`);
     logger.error(`data sent: ${JSON.stringify(postData)}`);
-    logger.error(
-      (error.response && error.response.data && error.response.data.message) ||
-        error.message
-    );
-    throw error;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
@@ -52,52 +50,69 @@ module.exports = {
     try {
       const realm = req.realm;
       const { document, tenantIds, terms, year, month } = req.body;
+      const defaultTerm = moment(`${year}/${month}/01`, 'YYYY/MM/DD').format(
+        'YYYYMMDDHH'
+      );
       const findTenant = promisify(occupantModel.findOne).bind(occupantModel);
-      const messages = [];
-      await Promise.all(
-        tenantIds?.map(async (tenantId, index) => {
-          const tenant = await findTenant(realm, tenantId);
-          messages.push({
+
+      // TODO: send emails in parallel not sequentially for better perf
+      const statusList = [];
+      for (let i = 0; i < tenantIds.length; i++) {
+        const tenantId = tenantIds[i];
+        const term = Number((terms && terms[i]) || defaultTerm);
+
+        // Find tenant recipient
+        let tenant;
+        try {
+          tenant = await findTenant(realm, tenantId);
+        } catch (error) {
+          logger.error(error);
+          statusList.push({
+            tenantId,
+            document,
+            term,
+            error: {
+              status: 404,
+              message: `tenant ${tenantId} not found`,
+            },
+          });
+          continue;
+        }
+
+        // Send email to tenant
+        try {
+          const status = await _sendEmail(req, {
             name: tenant.name,
             tenantId,
             document,
-            term: Number(
-              (terms && terms[index]) ||
-                moment(`${year}/${month}/01`, 'YYYY/MM/DD').format('YYYYMMDDHH')
-            ),
+            term,
           });
-        })
-      );
-      const statusList = await Promise.all(
-        messages.map(async (message) => {
-          try {
-            return await _sendEmail(req, message);
-          } catch (error) {
-            return [
-              {
-                ...message,
-                error: (error.response && error.response.data) || {
-                  status: 500,
-                  message: 'Something went wrong',
-                },
-              },
-            ];
-          }
-        })
-      );
-      const results = statusList.reduce((acc, statuses, index) => {
-        acc.push(
-          ...statuses.map((status) => ({
-            name: messages[index].name,
+          statusList.push({
+            name: tenant.name,
+            tenantId,
+            document,
+            term,
             ...status,
-          }))
-        );
-        return acc;
-      }, []);
-      res.json(results);
-    } catch (err) {
-      logger.error(err);
-      res.status(500).send(err);
+          });
+        } catch (error) {
+          logger.error(error);
+          statusList.push({
+            name: tenant.name,
+            tenantId,
+            document,
+            term,
+            error: error.response?.data || {
+              status: 500,
+              message: `Something went wrong when sending the email to ${tenant.name}`,
+            },
+          });
+        }
+      }
+
+      res.json(statusList);
+    } catch (error) {
+      logger.error(error);
+      res.status(500).send('an unexpected error occured when sending emails');
     }
   },
 };
