@@ -64,7 +64,6 @@ const _getEmailStatus = async (
     if (endTerm) {
       emailEndPoint = `${config.EMAILER_URL}/status/${startTerm}/${endTerm}`;
     }
-    logger.debug(`get email status ${emailEndPoint}`);
     const response = await axios.get(emailEndPoint, {
       headers: {
         authorization: authorizationHeader,

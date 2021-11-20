@@ -23,7 +23,6 @@ const _sendEmail = async (req, message) => {
       },
     });
 
-    logger.info(`POST ${config.EMAILER_URL} ${response.status}`);
     logger.debug(`data sent: ${JSON.stringify(postData)}`);
     logger.debug(`response: ${JSON.stringify(response.data)}`);
 

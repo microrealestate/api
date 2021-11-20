@@ -7,6 +7,8 @@ const mongoosedb = require('./models/mongoose/db');
 const restoredb = require('../scripts/mongorestore');
 const migratedb = require('../scripts/migration');
 
+require('./utils/httpinterceptors')();
+
 async function startService() {
   try {
     await db.init();
@@ -18,7 +20,7 @@ async function startService() {
     }
 
     // migrate db to the new models
-    await migratedb();
+    // await migratedb();
 
     server.listen(config.appHttpPort, () => {
       config.log();
