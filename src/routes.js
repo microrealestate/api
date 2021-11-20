@@ -1,6 +1,5 @@
 const express = require('express');
 const config = require('./config');
-const realmModel = require('./models/realm');
 const realmManager = require('./managers/realmmanager');
 const dashboardManager = require('./managers/dashboardmanager');
 const leaseManager = require('./managers/leasemanager');
@@ -10,40 +9,14 @@ const propertyManager = require('./managers/propertymanager');
 const ownerManager = require('./managers/ownermanager');
 const accountingManager = require('./managers/accountingmanager');
 const emailManager = require('./managers/emailmanager');
-const { needAccessToken } = require('./utils/middlewares');
+const { needAccessToken, checkOrganization } = require('./utils/middlewares');
 const router = express.Router();
 
 // protect the api access by checking the access token
 router.use(needAccessToken(config.ACCESS_TOKEN_SECRET));
 
 // update req with the user organizations
-router.use((req, res, next) => {
-  if (req.path !== '/realms' && !req.headers.organizationid) {
-    return res.sendStatus(404);
-  }
-
-  realmModel.findByEmail(req.user.email, (err, realms = []) => {
-    if (err) {
-      return next(err);
-    }
-    if (realms && realms.length) {
-      req.realms = realms;
-      const realmId = req.headers.organizationid;
-      if (realmId) {
-        req.realm = req.realms.find(
-          (realm) => realm._id.toString() === realmId
-        );
-        if (req.path !== '/realms' && !req.realm) {
-          return res.sendStatus(404);
-        }
-      }
-    } else {
-      delete req.realm;
-      req.realms = [];
-    }
-    next();
-  });
-});
+router.use(checkOrganization());
 
 const realmsRouter = express.Router();
 realmsRouter.get('/', realmManager.all);

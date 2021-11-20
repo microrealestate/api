@@ -129,9 +129,8 @@ module.exports = {
         updatedRealm.thirdParties.mailgun.apiKey
       );
     } else if (req.realm.thirdParties?.mailgun?.apiKey) {
-      updatedRealm.thirdParties.mailgun.apiKey = crypto.encrypt(
-        req.realm.thirdParties.mailgun.apiKey
-      );
+      updatedRealm.thirdParties.mailgun.apiKey =
+        req.realm.thirdParties.mailgun.apiKey;
     }
 
     if (b2ApplicationKeyIdUpdated) {
@@ -139,9 +138,8 @@ module.exports = {
         updatedRealm.thirdParties.b2.applicationKeyId
       );
     } else if (req.realm.thirdParties?.b2?.applicationKeyId) {
-      updatedRealm.thirdParties.b2.applicationKeyId = crypto.encrypt(
-        req.realm.thirdParties.b2.applicationKeyId
-      );
+      updatedRealm.thirdParties.b2.applicationKeyId =
+        req.realm.thirdParties.b2.applicationKeyId;
     }
 
     if (b2ApplicationKeyUpdated) {
@@ -149,9 +147,8 @@ module.exports = {
         updatedRealm.thirdParties.b2.applicationKey
       );
     } else if (req.realm.thirdParties?.b2?.applicationKey) {
-      updatedRealm.thirdParties.b2.applicationKey = crypto.encrypt(
-        req.realm.thirdParties.b2.applicationKey
-      );
+      updatedRealm.thirdParties.b2.applicationKey =
+        req.realm.thirdParties.b2.applicationKey;
     }
 
     const usernameMap = {};
