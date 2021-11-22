@@ -431,8 +431,11 @@ function toOccupantData(inputOccupant) {
           occupant.office.expense += property.expense;
         }
       }
-      occupant.rental += property.price || 0;
-      occupant.expenses += property.expense || 0;
+      occupant.rental += item.rent || 0;
+      occupant.expenses +=
+        (item.expenses?.length &&
+          item.expenses.reduce((acc, { amount }) => acc + amount, 0)) ||
+        0;
     });
     occupant.preTaxTotal =
       occupant.rental + occupant.expenses - occupant.discount;
